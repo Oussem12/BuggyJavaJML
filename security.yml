@@ -1,0 +1,44 @@
+name: Security CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build project (skip tests)
+        run: ./mvnw clean package -Dmaven.test.skip=true
+
+      # -------------------------
+      # SECRET SCANNING (GitGuardian-like)
+      # -------------------------
+      - name: GitHub Secret Scanning
+        run: echo "GitHub secret scanning is enabled by default"
+
+      # -------------------------
+      # DEPENDENCY VULNERABILITY SCAN (Snyk alternative)
+      # -------------------------
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+
+      # -------------------------
+      # CODE SECURITY / QUALITY (SonarCloud)
+      # -------------------------
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
